@@ -15,7 +15,11 @@ namespace MintaZH
 {
     public partial class Form1 : Form
     {
-        List<OlympicResult> results = new List<OlympicResult>(); 
+        List<OlympicResult> results = new List<OlympicResult>();
+        Excel.Application xlApp;
+        Excel.Workbook xlWB;
+        Excel.Worksheet xlSheet;
+
         public Form1()
         {
             InitializeComponent();
@@ -81,6 +85,7 @@ namespace MintaZH
             }
             return betterCountryCount + 1;
         }
+
         private void CalculateOrder()
         {
             foreach (var r in results)
@@ -91,7 +96,54 @@ namespace MintaZH
 
         private void button1_Click(object sender, EventArgs e)
         {
+            try
+            {
+                xlApp = new Excel.Application();
+                xlWB = xlApp.Workbooks.Add(Missing.Value);
+                xlSheet = xlWB.ActiveSheet;
 
+                CreateExcel();
+
+                xlApp.Visible = true;
+                xlApp.UserControl = true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+                xlWB.Close(false, Type.Missing, Type.Missing);
+                xlApp.Quit();
+                xlWB = null;
+                xlApp = null;
+            }
         }
+
+            private void CreateExcel()
+            {
+                var headers = new string[]
+                {
+                "Helyezés",
+                "Ország",
+                "Arany",
+                "Ezüst",
+                "Bronz"
+                };
+                for (int i = 0; i < headers.Length; i++)
+                    xlSheet.Cells[1, i + 1] = headers[i];
+
+                var filteredResults = from r in results
+                                      where r.Year == (int)comboBox1.SelectedItem
+                                      orderby r.Position
+                                      select r;
+
+                var counter = 2;
+                foreach (var r in filteredResults)
+                {
+                    xlSheet.Cells[counter, 1] = r.Position;
+                    xlSheet.Cells[counter, 2] = r.Country;
+                    for (int i = 0; i <= 2; i++)
+                        xlSheet.Cells[counter, i + 3] = r.Medals[i];
+                    counter++;
+                }
+            }
     }
 }
